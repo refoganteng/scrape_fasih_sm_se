@@ -4,6 +4,7 @@ import json
 import re
 from datetime import datetime
 from playwright.async_api import async_playwright
+from playwright_stealth import Stealth
 
 OUTPUT_DIR = "output"
 import os
@@ -42,9 +43,18 @@ async def main():
 """)
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False, slow_mo=200)
-        ctx = await browser.new_context(viewport={"width": 1400, "height": 900})
+        browser = await p.chromium.launch(
+            headless=False,
+            slow_mo=200,
+            args=["--disable-blink-features=AutomationControlled"],
+            ignore_default_args=["--enable-automation"]
+        )
+        ctx = await browser.new_context(
+            viewport={"width": 1400, "height": 900},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        )
         page = await ctx.new_page()
+        await Stealth().apply_stealth_async(page)
 
         # ── STEP 1: Buka FASIH & tunggu login ──
         await page.goto("https://fasih-sm.bps.go.id/", wait_until="domcontentloaded")
@@ -520,7 +530,6 @@ def simpan_csv(data: list[dict], filepath: str):
         writer.writeheader()
         writer.writerows(data)
 
-
 def simpan_csv_pivot(data: list[dict], filepath: str):
     """Simpan CSV pivot dengan kolom tetap: idsubsls + semua status."""
     if not data:
@@ -530,7 +539,6 @@ def simpan_csv_pivot(data: list[dict], filepath: str):
         writer = csv.DictWriter(f, fieldnames=SLS_PIVOT_FIELDNAMES, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(data)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
