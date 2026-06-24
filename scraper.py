@@ -442,16 +442,16 @@ async def scrape_sls_pivot_halaman(page) -> list[dict]:
                     // Ambil semua item SLS dari panel
                     // ID subsls ada di: div dengan class f:font-semibold f:text-foreground f:text-sm
                     const idDivs = panel.querySelectorAll(
-                        '[class*="f:font-semibold"][class*="f:text-foreground"][class*="f:text-sm"]'
+                        '[class*="font-semibold"][class*="text-foreground"][class*="text-sm"]'
                     );
 
                     const results = [];
                     for (const div of idDivs) {
                         const id = div.textContent.trim();
-                        // Hanya kode subsls 16 digit mulai 1708
-                        if (!/^1708\\d{12}$/.test(id)) continue;
+                        // Hanya kode subsls 16 digit mulai 17
+                        if (!/^17\\d{14}$/.test(id)) continue;
 
-                        // Cari parent row: walk up sampai ketemu elemen dengan class f:group
+                        // Cari parent row: walk up sampai ketemu elemen dengan class group atau flex
                         let row = div.parentElement;
                         while (row && !row.className.includes('f:group')) {
                             row = row.parentElement;
@@ -461,7 +461,7 @@ async def scrape_sls_pivot_halaman(page) -> list[dict]:
                         // Ambil semua badge status dalam row ini
                         const badges = {};
                         const statusSpans = row.querySelectorAll(
-                            '[class*="f:uppercase"][class*="f:tracking-wider"]'
+                            '[class*="uppercase"][class*="tracking-wider"]'
                         );
                         for (const span of statusSpans) {
                             const statusName = span.textContent.trim();
