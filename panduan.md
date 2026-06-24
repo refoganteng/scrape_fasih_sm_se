@@ -20,7 +20,7 @@ Setiap baris = 1 SLS unik, kolom = jumlah dokumen per status.
 
 ### Install Python dependencies
 ```bash
-pip install playwright
+pip install playwright playwright-stealth
 playwright install chromium
 ```
 
