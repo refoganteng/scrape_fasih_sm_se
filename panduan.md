@@ -30,8 +30,7 @@ playwright install chromium
 
 ### 1. Jalankan script
 ```bash
-cd /Users/user/scrape-progres-se26
-python3 scraper.py
+python scraper.py
 ```
 
 ### 2. Browser Chromium akan terbuka otomatis
