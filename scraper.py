@@ -64,6 +64,15 @@ async def main():
         # ── STEP 2: Klik tab 'Pengawas' kalau belum aktif ──
         print("\n[INFO] Memastikan tab Pengawas aktif...")
         try:
+            # Tunggu tab Pengawas muncul di DOM (maks 5 detik)
+            try:
+                await page.wait_for_selector(
+                    'button:has-text("Pengawas"), [role="tab"]:has-text("Pengawas")',
+                    timeout=5000
+                )
+            except Exception:
+                pass
+
             tab_pengawas = page.locator(
                 'button:has-text("Pengawas"), [role="tab"]:has-text("Pengawas")'
             ).first
@@ -120,6 +129,15 @@ async def scrape_petugas_semua(page) -> list[dict]:
     
     while True:
         print(f"  [Halaman {halaman}] Scraping...")
+        if halaman == 1:
+            try:
+                await page.wait_for_selector(
+                    '[class*="rounded-xl"][class*="border"]',
+                    timeout=10000
+                )
+            except Exception:
+                pass
+            await page.wait_for_timeout(1500)
         data = await scrape_petugas_halaman(page)
         if not data:
             print(f"  [Halaman {halaman}] Tidak ada data, berhenti.")
@@ -190,6 +208,15 @@ async def scrape_sls_semua(page) -> list[dict]:
     
     while True:
         print(f"\n  [Halaman {halaman}] Expand petugas untuk scrape SLS...")
+        if halaman == 1:
+            try:
+                await page.wait_for_selector(
+                    'button[aria-expanded="false"]',
+                    timeout=10000
+                )
+            except Exception:
+                pass
+            await page.wait_for_timeout(1500)
         data = await scrape_sls_halaman(page)
         all_data.extend(data)
         print(f"  [Halaman {halaman}] → {len(data)} SLS records")
@@ -293,6 +320,15 @@ async def scrape_sls_pivot_semua(page) -> list[dict]:
 
     while True:
         print(f"\n  [Halaman {halaman}] Scrape SLS Pivot...")
+        if halaman == 1:
+            try:
+                await page.wait_for_selector(
+                    'button[aria-expanded][class*="f:justify-between"]',
+                    timeout=10000
+                )
+            except Exception:
+                print("  [WARN] Timeout menunggu accordion muncul di Halaman 1.")
+            await page.wait_for_timeout(1500)
         rows = await scrape_sls_pivot_halaman(page)
         for row in rows:
             id_ = row["idsubsls"]
