@@ -153,7 +153,7 @@ async def scrape_petugas_semua(page) -> list[dict]:
             break
         
         await next_btn.click()
-        await page.wait_for_timeout(4500)  # +3 detik
+        await page.wait_for_timeout(9500)  # +3 detik
         halaman += 1
     
     return all_data
@@ -361,7 +361,7 @@ async def scrape_sls_pivot_semua(page) -> list[dict]:
         # Klik Next
         await next_btn.click()
         # Tunggu skeleton loading hilang — cek sampai accordion muncul atau timeout
-        await page.wait_for_timeout(4500)  # jeda awal (+3 detik)
+        await page.wait_for_timeout(9500)  # jeda awal (+3 detik)
         try:
             await page.wait_for_selector(
                 'button[aria-expanded][class*="f:justify-between"]',
