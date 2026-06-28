@@ -484,8 +484,8 @@ async def scrape_sls_pivot_halaman(page) -> list[dict]:
                     const results = [];
                     for (const div of idDivs) {
                         const id = div.textContent.trim();
-                        // Hanya kode subsls 16 digit
-                        if (!/^\\d{16}$/.test(id)) continue;
+                        // Hanya kode subsls 16 digit mulai 17
+                        if (!/^17\\d{14}$/.test(id)) continue;
 
                         // Cari parent row: walk up sampai ketemu elemen dengan class group atau flex
                         let row = div.parentElement;
