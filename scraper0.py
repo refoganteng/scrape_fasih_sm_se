@@ -21,6 +21,33 @@ ALL_STATUSES = [
 ]
 SLS_PIVOT_FIELDNAMES = ["idsubsls"] + ALL_STATUSES
 
+def map_status(raw_status: str) -> str:
+    s = raw_status.strip().upper()
+    if s == "OPEN":
+        return "OPEN"
+    if s == "DRAFT":
+        return "DRAFT"
+    if s == "SUBMITTED BY PENCACAH":
+        return "SUBMITTED BY Pencacah"
+    if s == "SUBMITTED RESPONDENT":
+        return "SUBMITTED RESPONDENT"
+    if s in ("APPROVED BY PENGAWAS", "EDITED BY PENGAWAS", "EDITED BY ADMIN KABUPATEN"):
+        return "APPROVED BY Pengawas"
+    if s in ("REJECTED BY PENGAWAS", "REVOKED BY PENGAWAS", "REJECTED BY ADMIN KABUPATEN"):
+        return "REJECTED BY Pengawas"
+    
+    # Fallback keyword matching
+    if "SUBMITTED" in s:
+        if "RESPONDENT" in s:
+            return "SUBMITTED RESPONDENT"
+        return "SUBMITTED BY Pencacah"
+    if "APPROVED" in s or "EDITED" in s:
+        return "APPROVED BY Pengawas"
+    if "REJECTED" in s or "REVOKED" in s:
+        return "REJECTED BY Pengawas"
+    
+    return "OPEN"
+
 # ──────────────────────────────────────────────
 # HELPER: tunggu user konfirmasi via terminal
 # ──────────────────────────────────────────────
@@ -296,7 +323,7 @@ async def scrape_sls_halaman(page) -> list[dict]:
                 all_text = await open_panel.inner_text()
                 lines = [l.strip() for l in all_text.split("\n") if l.strip()]
                 for line in lines[:100]:  # max 100 baris per petugas
-                    if any(kw in line.lower() for kw in ["submitted", "approved", "rejected", "open", "draft", "review"]):
+                    if any(kw in line.lower() for kw in ["submitted", "approved", "rejected", "open", "draft", "review", "edited", "admin"]):
                         hasil.append({
                             "petugas_email": email,
                             "raw_text": line,
@@ -533,7 +560,10 @@ async def scrape_sls_pivot_halaman(page) -> list[dict]:
                 badges = item.get("badges", {})
                 row = {"idsubsls": id_val}
                 for st in ALL_STATUSES:
-                    row[st] = badges.get(st, 0)
+                    row[st] = 0
+                for raw_st, count in badges.items():
+                    target_st = map_status(raw_st)
+                    row[target_st] += count
                 hasil.append(row)
                 sls_count += 1
 

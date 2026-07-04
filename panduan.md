@@ -77,8 +77,8 @@ idsubsls,OPEN,DRAFT,SUBMITTED BY Pencacah,SUBMITTED RESPONDENT,APPROVED BY Penga
 - **DRAFT** — jumlah dokumen Draft
 - **SUBMITTED BY Pencacah** — sudah disubmit pencacah
 - **SUBMITTED RESPONDENT** — submitted oleh responden
-- **APPROVED BY Pengawas** — sudah diapprove pengawas
-- **REJECTED BY Pengawas** — ditolak pengawas
+- **APPROVED BY Pengawas** — sudah diapprove pengawas (termasuk status EDITED BY PENGAWAS dan EDITED BY ADMIN KABUPATEN)
+- **REJECTED BY Pengawas** — ditolak/direvoke pengawas atau admin kabupaten (termasuk status REVOKED BY PENGAWAS dan REJECTED BY ADMIN KABUPATEN)
 
 ---
 struktur projek
