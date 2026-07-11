@@ -31,7 +31,7 @@ def map_status(raw_status: str) -> str:
         return "SUBMITTED BY Pencacah"
     if s == "SUBMITTED RESPONDENT":
         return "SUBMITTED RESPONDENT"
-    if s in ("APPROVED BY PENGAWAS", "EDITED BY PENGAWAS", "EDITED BY ADMIN KABUPATEN"):
+    if s in ("APPROVED BY PENGAWAS", "EDITED BY PENGAWAS", "EDITED BY ADMIN KABUPATEN", "COMPLETED BY ADMIN KABUPATEN"):
         return "APPROVED BY Pengawas"
     if s in ("REJECTED BY PENGAWAS", "REVOKED BY PENGAWAS", "REJECTED BY ADMIN KABUPATEN"):
         return "REJECTED BY Pengawas"
