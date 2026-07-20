@@ -1,0 +1,26 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS files
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Chrome/Playwright user data & profiles
+chrome_debug_profile/
+browser_user_data/
+
+# Scraper output CSV files (keep output/ folder structure if needed)
+output/*.csv
+
+# Temporary debug files
+halaman.html
+isi-accordion.html
+layar_ready.jpeg
+*.html
+*.png
+*.jpeg
+*.jpg
