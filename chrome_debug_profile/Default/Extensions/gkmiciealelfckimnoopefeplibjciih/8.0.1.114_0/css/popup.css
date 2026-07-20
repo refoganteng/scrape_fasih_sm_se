@@ -1,0 +1,543 @@
+/** @format */
+
+@font-face {
+  font-family: 'Lato-Semibold';
+  src: url('chrome-extension://__MSG_@@extension_id__/fonts/Lato-Semibold.ttf')
+    format('truetype');
+}
+
+@font-face {
+  font-family: 'Lato-Bold';
+  src: url('chrome-extension://__MSG_@@extension_id__/fonts/Lato-Bold.ttf')
+    format('truetype');
+}
+
+@font-face {
+  font-family: 'Lato-Medium';
+  src: url('chrome-extension://__MSG_@@extension_id__/fonts/Lato-Medium.ttf')
+    format('truetype');
+}
+
+@font-face {
+  font-family: 'Lato-Light';
+  src: url('chrome-extension://__MSG_@@extension_id__/fonts/Lato-Light.ttf')
+    format('truetype');
+}
+
+@font-face {
+  font-family: 'Lato-Thin';
+  src: url('chrome-extension://__MSG_@@extension_id__/fonts/Lato-Thin.ttf')
+    format('truetype');
+}
+
+@font-face {
+  font-family: 'Lato-Regular';
+  src: url('chrome-extension://__MSG_@@extension_id__/fonts/Lato-Regular.ttf')
+    format('truetype');
+}
+
+@font-face {
+  font-family: 'Lato-Heavy';
+  src: url('chrome-extension://__MSG_@@extension_id__/fonts/Lato-Heavy.ttf')
+    format('truetype');
+}
+
+:root {
+  --ftnt-ext-bg-color: white;
+  --ftnt-ext-bg-color-highlight: rgb(245, 245, 245);
+  --ftnt-ext-bg-color-selection: rgb(198, 219, 252);
+  --ftnt-ext-text-color: rgb(45, 45, 45);
+  --ftnt-ext-text-color-highlight: rgb(45, 45, 45);
+  --ftnt-ext-text-color-selection: black;
+
+  --ftnt-ext-bg-color-dark: rgb(40, 40, 40);
+  --ftnt-ext-bg-color-dark-highlight: rgb(50, 50, 50);
+  --ftnt-ext-bg-color-dark-selection: rgb(121, 66, 66);
+  --ftnt-ext-text-color-dark: rgb(200, 200, 200);
+  --ftnt-ext-text-color-dark-highlight: rgb(200, 200, 200);
+  --ftnt-ext-text-color-dark-selection: white;
+
+  --ftnt-ext-modal-font-family: 'Lato-Regular';
+  --ftnt-ext-modal-line-height: 30px;
+  --ftnt-ext-modal-min-width: 60px;
+
+  --neutrino-background-color: var(--ftnt-ext-bg-color);
+  --neutrino-background-color-highlight: var(--ftnt-ext-bg-color-highlight);
+  --neutrino-background-color-selection: var(--ftnt-ext-bg-color-selection);
+  --neutrino-text-color: var(--ftnt-ext-text-color);
+  --neutrino-text-color-highlight: var(--ftnt-ext-text-color);
+  --neutrino-text-color-selection: var(--ftnt-ext-text-color-selection);
+  --neutrino-accent-color: rgb(65, 79, 104);
+
+  --jade-background-color: var(--ftnt-ext-bg-color);
+  --jade-background-color-highlight: var(--ftnt-ext-bg-color-highlight);
+  --jade-background-color-selection: var(--ftnt-ext-bg-color-selection);
+  --jade-text-color: var(--ftnt-ext-text-color);
+  --jade-text-color-highlight: var(--ftnt-ext-text-color);
+  --jade-text-color-selection: var(--ftnt-ext-text-color-selection);
+  --jade-accent-color: rgb(73, 146, 88);
+
+  --mariner-background-color: var(--ftnt-ext-bg-color);
+  --mariner-background-color-highlight: var(--ftnt-ext-bg-color-highlight);
+  --mariner-background-color-selection: var(--ftnt-ext-bg-color-selection);
+  --mariner-text-color: var(--ftnt-ext-text-color);
+  --mariner-text-color-highlight: var(--ftnt-ext-text-color);
+  --mariner-text-color-selection: var(--ftnt-ext-text-color-selection);
+  --mariner-accent-color: rgb(43, 118, 185);
+
+  --graphite-background-color: var(--ftnt-ext-bg-color);
+  --graphite-background-color-highlight: var(--ftnt-ext-bg-color-highlight);
+  --graphite-background-color-selection: var(--ftnt-ext-bg-color-selection);
+  --graphite-text-color: var(--ftnt-ext-text-color);
+  --graphite-text-color-highlight: var(--ftnt-ext-text-color);
+  --graphite-text-color-selection: var(--ftnt-ext-text-color-selection);
+  --graphite-accent-color: rgb(90, 90, 90);
+
+  --melongene-background-color: var(--ftnt-ext-bg-color);
+  --melongene-background-color-highlight: var(--ftnt-ext-bg-color-highlight);
+  --melongene-background-color-selection: var(--ftnt-ext-bg-color-selection);
+  --melongene-text-color: var(--ftnt-ext-text-color);
+  --melongene-text-color-highlight: var(--ftnt-ext-text-color);
+  --melongene-text-color-selection: var(--ftnt-ext-text-color-selection);
+  --melongene-accent-color: rgb(60, 42, 59);
+
+  --retro-background-color: rgb(214, 229, 228);
+  --retro-background-color-highlight: rgb(203, 220, 220);
+  --retro-background-color-selection: var(--ftnt-ext-bg-color-selection);
+  --retro-text-color: var(--ftnt-ext-text-color);
+  --retro-text-color-highlight: var(--ftnt-ext-text-color);
+  --retro-text-color-selection: var(--ftnt-ext-text-color-selection);
+  --retro-accent-color: rgb(29, 124, 119);
+
+  --cloud-background-color: var(--ftnt-ext-bg-color);
+  --cloud-background-color-highlight: var(--ftnt-ext-bg-color-highlight);
+  --cloud-background-color-selection: var(--ftnt-ext-bg-color-selection);
+  --cloud-text-color: var(--ftnt-ext-text-color);
+  --cloud-text-color-highlight: var(--ftnt-ext-text-color);
+  --cloud-text-color-selection: var(--ftnt-ext-text-color-selection);
+  --cloud-accent-color: rgb(61, 88, 121);
+
+  --darkmatter-background-color: var(--ftnt-ext-bg-color-dark);
+  --darkmatter-background-color-highlight: var(
+    --ftnt-ext-bg-color-dark-highlight
+  );
+  --darkmatter-background-color-selection: var(
+    --ftnt-ext-bg-color-dark-selection
+  );
+  --darkmatter-text-color: var(--ftnt-ext-text-color-dark);
+  --darkmatter-text-color-highlight: var(--ftnt-ext-text-color-dark);
+  --darkmatter-text-color-selection: var(--ftnt-ext-text-color-dark-selection);
+  --darkmatter-accent-color: rgb(98, 101, 162);
+
+  --onyx-background-color: var(--ftnt-ext-bg-color-dark);
+  --onyx-background-color-highlight: var(--ftnt-ext-bg-color-dark-highlight);
+  --onyx-background-color-selection: var(--ftnt-ext-bg-color-dark-selection);
+  --onyx-text-color: var(--ftnt-ext-text-color-dark);
+  --onyx-text-color-highlight: var(--ftnt-ext-text-color-dark);
+  --onyx-text-color-selection: var(--ftnt-ext-text-color-dark-selection);
+  --onyx-accent-color: var(--jade-accent-color);
+
+  --eclipse-background-color: rgb(67, 75, 84);
+  --eclipse-background-color-highlight: rgb(75, 83, 93);
+  --eclipse-background-color-selection: var(--ftnt-ext-bg-color-dark-selection);
+  --eclipse-text-color: var(--ftnt-ext-text-color-dark);
+  --eclipse-text-color-highlight: var(--ftnt-ext-text-color-dark);
+  --eclipse-text-color-selection: var(--ftnt-ext-text-color-dark-selection);
+  --eclipse-accent-color: rgb(242, 156, 56);
+
+  --cloud-dark-background-color: rgb(35, 45, 64);
+  --cloud-dark-background-color-highlight: rgb(42, 54, 76);
+  --cloud-dark-background-color-selection: var(
+    --ftnt-ext-bg-color-dark-selection
+  );
+  --cloud-dark-text-color: var(--ftnt-ext-text-color-dark);
+  --cloud-dark-text-color-highlight: var(--ftnt-ext-text-color-dark);
+  --cloud-dark-text-color-selection: var(--ftnt-ext-text-color-dark-selection);
+  --cloud-dark-accent-color: rgb(88, 130, 151);
+}
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  width: 400px;
+  font-family: var(--ftnt-ext-modal-font-family);
+}
+
+.container {
+  height: 100%;
+}
+
+.top-header {
+  height: 35px;
+  box-sizing: content-box;
+  font-size: 13px;
+  color: var(--ftnt-ext-bg-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 8px;
+  
+}
+
+.logo-div{
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.logo {
+  padding-right: 5px;
+}
+
+.log-button {
+  display: flex;
+  align-items: center;
+  background-color: white;
+  border: none;
+  border-radius: 2px;
+}
+
+.log-button:hover {
+  cursor: pointer;
+  background-color: var(--ftnt-ext-bg-color-highlight);
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding-bottom: 25px;
+}
+
+.main-content button {
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  border: none;
+  border-radius: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.footer {
+  background-color: rgb(212, 53, 39);
+  color: var(--ftnt-ext-bg-color);
+  display: flex;
+  justify-content: center;
+  padding: 2px;
+  display: none;
+}
+
+.quick-launch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.quick-launch:hover {
+  cursor: pointer;
+  box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.main-content.ext-theme-neutrino, .quick-launch.ext-theme-neutrino {
+  background-color: var(--neutrino-background-color);
+  color: var(--neutrino-text-color);
+}
+
+.quick-launch.ext-theme-neutrino:hover {
+  background-color: var(--neutrino-background-color-highlight);
+}
+
+.utility {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 9px;
+}
+
+.utility span {
+  cursor: pointer;
+}
+
+.main-content.ext-theme-jade, .quick-launch.ext-theme-jade, .utility.ext-theme-jade {
+  background-color: var(--jade-background-color);
+  color: var(--jade-text-color);
+}
+
+.quick-launch.ext-theme-jade:hover {
+  background-color: var(--jade-background-color-highlight);
+}
+
+.main-content.ext-theme-mariner, .quick-launch.ext-theme-mariner, .utility.ext-theme-mariner {
+  background-color: var(--mariner-background-color);
+  color: var(--mariner-text-color);
+}
+
+.quick-launch.ext-theme-mariner:hover {
+  background-color: var(--mariner-background-color-highlight);
+}
+
+.main-content.ext-theme-graphite, .quick-launch.ext-theme-graphite, .utility.ext-theme-graphite {
+  background-color: var(--graphite-background-color);
+  color: var(--graphite-text-color);
+}
+
+.quick-launch.ext-theme-graphite:hover {
+  background-color: var(--graphite-background-color-highlight);
+}
+
+.main-content.ext-theme-melongene, .quick-launch.ext-theme-melongene, .utility.ext-theme-melongene {
+  background-color: var(--melongene-background-color);
+  color: var(--melongene-text-color);
+}
+
+.quick-launch.ext-theme-melongene:hover {
+  background-color: var(--melongene-background-color-highlight);
+}
+
+.main-content.ext-theme-retro, .quick-launch.ext-theme-retro, .utility.ext-theme-retro{
+  background-color: var(--retro-background-color);
+  color: var(--retro-text-color);
+}
+
+.quick-launch.ext-theme-retro:hover {
+  background-color: var(--retro-background-color-highlight);
+}
+
+.main-content.ext-theme-cloud, .quick-launch.ext-theme-cloud, .utility.ext-theme-cloud {
+  background-color: var(--cloud-background-color);
+  color: var(--cloud-text-color);
+}
+
+.quick-launch.ext-theme-cloud:hover {
+  background-color: var(--cloud-background-color-highlight);
+}
+
+.main-content.ext-theme-darkmatter, .quick-launch.ext-theme-darkmatter, .utility.ext-theme-darkmatter {
+  background-color: var(--darkmatter-background-color);
+  color: var(--darkmatter-text-color);
+}
+
+.quick-launch.ext-theme-darkmatter:hover {
+  background-color: var(--darkmatter-background-color-highlight);
+}
+
+.main-content.ext-theme-onyx, .quick-launch.ext-theme-onyx, .utility.ext-theme-onyx {
+  background-color: var(--onyx-background-color);
+  color: var(--onyx-text-color);
+}
+
+.quick-launch.ext-theme-onyx:hover {
+  background-color: var(--onyx-background-color-highlight);
+}
+
+.main-content.ext-theme-eclipse, .quick-launch.ext-theme-eclipse, .utility.ext-theme-eclipse {
+  background-color: var(--eclipse-background-color);
+  color: var(--eclipse-text-color);
+}
+
+.quick-launch.ext-theme-eclipse:hover {
+  background-color: var(--eclipse-background-color-highlight);
+}
+
+.main-content.ext-theme-clouddark, .quick-launch.ext-theme-clouddark, .utility.ext-theme-clouddark {
+  background-color: var(--cloud-dark-background-color);
+  color: var(--cloud-dark-text-color);
+}
+
+.quick-launch.ext-theme-clouddark:hover {
+  background-color: var(--cloud-dark-background-color-highlight);
+}
+
+.top-header.ext-theme-neutrino {
+  background-color: var(--neutrino-accent-color);
+}
+
+.top-header.ext-theme-jade {
+  background-color: var(--jade-accent-color);
+}
+
+.top-header.ext-theme-mariner {
+  background-color: var(--mariner-accent-color);
+}
+
+.top-header.ext-theme-graphite {
+  background-color: var(--graphite-accent-color);
+}
+
+.top-header.ext-theme-melongene {
+  background-color: var(--melongene-accent-color);
+}
+
+.top-header.ext-theme-retro {
+  background-color: var(--retro-accent-color);
+}
+
+.top-header.ext-theme-cloud {
+  background-color: var(--cloud-accent-color);
+}
+
+.top-header.ext-theme-darkmatter {
+  background-color: var(--darkmatter-accent-color);
+}
+
+.top-header.ext-theme-onyx {
+  background-color: var(--onyx-accent-color);
+}
+
+.top-header.ext-theme-eclipse {
+  background-color: var(--eclipse-accent-color);
+}
+
+.top-header.ext-theme-clouddark {
+  background-color: var(--cloud-dark-accent-color);
+}
+
+.system-proxy-setting,
+.jwt-verification-setting {
+  display: flex;
+  flex-direction: column;
+}
+
+.system-proxy-setting-header,
+.jwt-verification-setting-header,
+.trusted-hosts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="number"],
+textarea {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #666;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.setting-div {
+  padding: 5px;
+}
+
+input[type="text"]::placeholder,
+input[type="number"]::placeholder,
+textarea::placeholder
+input[type="text"]::-ms-inpupt-placeholder,
+input[type="number"]::-ms-inpupt-placeholder,
+textarea::-ms-inpupt-placeholder {
+  font-family: var(--ftnt-ext-modal-font-family);
+  font-size: 10px;
+}
+
+textarea {
+  resize: vertical;
+  height: 40px;
+  min-height: 40px;
+  max-height: 120px;
+}
+
+input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+input[type="text"],
+input[type="number"] {
+  margin-bottom: 10px;
+}
+
+input[type="checkbox"] {
+  margin-bottom: 10px;
+}
+
+textarea {
+  margin-bottom: 10px;
+}
+
+.save-exit {
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: row;
+  padding-left: 5px;
+}
+
+#save-proxy-setting, #cancel-proxy-setting,
+#save-jwt-verification-setting, #cancel-jwt-verification-setting {
+  padding: 2px;
+  border: 1px solid #666;
+  border-radius: 4px;
+  background-color: white;
+  font-family: var(--ftnt-ext-modal-font-family);
+  font-size: 12px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.jwt-verification-warning {
+  color: rgb(212, 53, 39);
+  font-size: 11px;
+  margin-top: 5px;
+}
+
+.jwt-verification-save-warning {
+  background-color: rgb(255, 200, 180) !important;
+  border-color: rgb(212, 53, 39) !important;
+  color: rgb(212, 53, 39) !important;
+}
+
+.trusted-hosts-section {
+  padding: 5px;
+}
+
+.trusted-hosts-desc {
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+
+.trusted-hosts-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 5px 0;
+}
+
+.trusted-hosts-list li {
+  font-size: 11px;
+  padding: 2px 0;
+  word-break: break-all;
+}
+
+.trusted-hosts-empty {
+  font-size: 11px;
+  font-style: italic;
+  color: #666;
+  margin: 0 0 5px 0;
+}
+
+.main-content .clear-trusted-hosts-btn {
+  padding: 2px;
+  border: 1px solid #666;
+  border-radius: 4px;
+  background-color: white;
+  font-family: var(--ftnt-ext-modal-font-family);
+  font-size: 12px;
+  cursor: pointer;
+  margin-right: 5px;
+}

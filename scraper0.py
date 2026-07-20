@@ -31,7 +31,7 @@ def map_status(raw_status: str) -> str:
         return "SUBMITTED BY Pencacah"
     if s == "SUBMITTED RESPONDENT":
         return "SUBMITTED RESPONDENT"
-    if s in ("APPROVED BY PENGAWAS", "EDITED BY PENGAWAS", "EDITED BY ADMIN KABUPATEN"):
+    if s in ("APPROVED BY PENGAWAS", "EDITED BY PENGAWAS", "EDITED BY ADMIN KABUPATEN", "COMPLETED BY ADMIN KABUPATEN"):
         return "APPROVED BY Pengawas"
     if s in ("REJECTED BY PENGAWAS", "REVOKED BY PENGAWAS", "REJECTED BY ADMIN KABUPATEN"):
         return "REJECTED BY Pengawas"
@@ -511,8 +511,8 @@ async def scrape_sls_pivot_halaman(page) -> list[dict]:
                     const results = [];
                     for (const div of idDivs) {
                         const id = div.textContent.trim();
-                        // Hanya kode subsls 16 digit mulai 17
-                        if (!/^17\\d{14}$/.test(id)) continue;
+                        // Hanya kode subsls 16 digit
+                        if (!/^\\d{16}$/.test(id)) continue;
 
                         // Cari parent row: walk up sampai ketemu elemen dengan class group atau flex
                         let row = div.parentElement;

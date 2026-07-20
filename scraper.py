@@ -1,13 +1,16 @@
 import asyncio
 import csv
 import json
+import os
+import random
 import re
+import subprocess
+import sys
+import time
 from datetime import datetime
 from playwright.async_api import async_playwright
-from playwright_stealth import Stealth
 
 OUTPUT_DIR = "output"
-import os
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ── Semua jenis status dokumen (pivot CSV) ─────────────────────
@@ -59,6 +62,107 @@ def konfirmasi(prompt: str) -> bool:
     return jawab.startswith("y")
 
 # ──────────────────────────────────────────────
+# HELPER: Anti-Bot & Delay Natural
+# ──────────────────────────────────────────────
+async def human_delay(min_sec: float = 1.5, max_sec: float = 3.0):
+    await asyncio.sleep(random.uniform(min_sec, max_sec))
+
+# Regex pattern untuk mendeteksi kode bot BPS: BOT-<angka panjang>
+BOT_CODE_PATTERN = re.compile(r"BOT-\d{10,}", re.IGNORECASE)
+
+async def check_and_handle_bot_block(page) -> bool:
+    """Cek apakah halaman terkena blokir bot FASIH BPS."""
+    try:
+        content = await page.content()
+        is_blocked = (
+            "mendeteksi koneksi anda sebagai bot" in content.lower()
+            or "perilaku yang tidak wajar" in content.lower()
+            or BOT_CODE_PATTERN.search(content)
+        )
+        if is_blocked:
+            print("\a\n" + "!"*60)
+            print("  ⚠️  TERDETEKSI BOT oleh FASIH BPS!")
+            print("  Berpindah ke jendela Chrome:")
+            print("  1. Klik '[Kembali]' di halaman blokir")
+            print("  2. Navigasi kembali ke Rekap Petugas Pengawas")
+            print("!"*60)
+            tanya("Setelah halaman normal kembali, tekan ENTER...")
+            await human_delay(2.0, 3.5)
+            return True
+    except Exception:
+        pass
+    return False
+
+# ──────────────────────────────────────────────
+# CHROME CDP LAUNCHER
+# ──────────────────────────────────────────────
+CDP_PORT = 9222
+
+def find_chrome_path() -> str:
+    """Cari path Google Chrome di macOS."""
+    paths = [
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        os.path.expanduser("~/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+    ]
+    for p in paths:
+        if os.path.isfile(p):
+            return p
+    return ""
+
+def is_chrome_cdp_ready() -> bool:
+    """Cek apakah Chrome sudah running dan CDP bisa dihubungi."""
+    import urllib.request
+    try:
+        req = urllib.request.urlopen(f"http://127.0.0.1:{CDP_PORT}/json/version", timeout=2)
+        req.read()
+        return True
+    except Exception:
+        return False
+
+def launch_chrome_with_cdp():
+    """Buka Chrome dengan remote debugging port jika belum jalan."""
+    if is_chrome_cdp_ready():
+        print(f"[INFO] Chrome sudah running di port {CDP_PORT}, langsung connect...")
+        return None
+
+    chrome_path = find_chrome_path()
+    if not chrome_path:
+        print("[ERROR] Google Chrome tidak ditemukan!")
+        print("  Install Google Chrome terlebih dahulu, atau buka Chrome secara manual:")
+        print(f'  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-debugging-port={CDP_PORT}')
+        sys.exit(1)
+
+    user_data_dir = os.path.abspath("./chrome_debug_profile")
+    os.makedirs(user_data_dir, exist_ok=True)
+
+    print(f"[INFO] Membuka Google Chrome dengan remote debugging (port {CDP_PORT})...")
+    proc = subprocess.Popen(
+        [
+            chrome_path,
+            f"--remote-debugging-port={CDP_PORT}",
+            f"--user-data-dir={user_data_dir}",
+            "--start-maximized",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "https://fasih-sm.bps.go.id/",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    # Tunggu sampai CDP siap
+    for _ in range(30):
+        time.sleep(1)
+        if is_chrome_cdp_ready():
+            print("[INFO] Chrome CDP siap!")
+            return proc
+    
+    print("[ERROR] Timeout menunggu Chrome CDP siap.")
+    proc.terminate()
+    sys.exit(1)
+
+
+# ──────────────────────────────────────────────
 # SCRAPER UTAMA
 # ──────────────────────────────────────────────
 async def main():
@@ -66,32 +170,32 @@ async def main():
 ╔══════════════════════════════════════════════════════════╗
 ║         FASIH Scraper — SE2026 Assignment Progress       ║
 ║   by Refo @ BPS Kepahiang                               ║
+║                                                          ║
+║   Mode: Connect ke Chrome via CDP (anti-bot)             ║
 ╚══════════════════════════════════════════════════════════╝
 """)
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=False,
-            slow_mo=200,
-            args=["--disable-blink-features=AutomationControlled"],
-            ignore_default_args=["--enable-automation"]
-        )
-        ctx = await browser.new_context(
-            viewport={"width": 1400, "height": 900},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-        )
-        page = await ctx.new_page()
-        await Stealth().apply_stealth_async(page)
+    # Buka Chrome biasa (bukan Playwright) dengan CDP port
+    chrome_proc = launch_chrome_with_cdp()
 
-        # ── STEP 1: Buka FASIH & tunggu login ──
-        await page.goto("https://fasih-sm.bps.go.id/", wait_until="domcontentloaded")
-        print("\n[INFO] Browser terbuka → silakan LOGIN dulu di browser ya bro!")
+    async with async_playwright() as p:
+        # Connect ke Chrome yang sudah berjalan — BUKAN launch baru
+        # Ini artinya Playwright tidak inject apa-apa ke Chrome
+        browser = await p.chromium.connect_over_cdp(f"http://127.0.0.1:{CDP_PORT}")
+        ctx = browser.contexts[0]
+        page = ctx.pages[0] if ctx.pages else await ctx.new_page()
+
+        print("\n[INFO] Terhubung ke Chrome yang sudah terbuka!")
+        print("[INFO] Silakan LOGIN ke FASIH di Chrome, navigasi ke Rekap Petugas Pengawas.")
         tanya("Setelah LOGIN berhasil & sudah di halaman Rekap Petugas Pengawas, tekan ENTER...")
+
+        # Cek apakah kena bot block setelah login
+        if await check_and_handle_bot_block(page):
+            pass  # user sudah handle manual
 
         # ── STEP 2: Klik tab 'Pengawas' kalau belum aktif ──
         print("\n[INFO] Memastikan tab Pengawas aktif...")
         try:
-            # Tunggu tab Pengawas muncul di DOM (maks 5 detik)
             try:
                 await page.wait_for_selector(
                     'button:has-text("Pengawas"), [role="tab"]:has-text("Pengawas")',
@@ -141,200 +245,10 @@ async def main():
         print("="*60)
         print(f"  Total idsubsls unik : {len(pivot_data)}")
         print("\n[INFO] File tersimpan di folder: output/")
-        tanya("Tekan ENTER untuk tutup browser...")
+        print("[INFO] Chrome tetap terbuka — kamu bisa tutup manual.")
+        
+        # Disconnect (bukan close — Chrome tetap terbuka)
         await browser.close()
-
-
-
-
-# ──────────────────────────────────────────────
-# SCRAPE: Daftar petugas (semua halaman)
-# ──────────────────────────────────────────────
-async def scrape_petugas_semua(page) -> list[dict]:
-    all_data = []
-    halaman = 1
-    
-    while True:
-        print(f"  [Halaman {halaman}] Scraping...")
-        if halaman == 1:
-            try:
-                await page.wait_for_selector(
-                    '[class*="rounded-xl"][class*="border"]',
-                    timeout=10000
-                )
-            except Exception:
-                pass
-            await page.wait_for_timeout(1500)
-        data = await scrape_petugas_halaman(page)
-        if not data:
-            print(f"  [Halaman {halaman}] Tidak ada data, berhenti.")
-            break
-        
-        all_data.extend(data)
-        print(f"  [Halaman {halaman}] → {len(data)} petugas (total: {len(all_data)})")
-        
-        # Cari tombol Next
-        next_btn = page.locator('a[aria-label="Go to next page"], a:has-text("Next")').first
-        if await next_btn.count() == 0 or await next_btn.is_disabled():
-            print("  [INFO] Sudah halaman terakhir.")
-            break
-        
-        await next_btn.click()
-        await page.wait_for_timeout(9500)  # +3 detik
-        halaman += 1
-    
-    return all_data
-
-
-async def scrape_petugas_halaman(page) -> list[dict]:
-    hasil = []
-    # Cari card petugas — berdasarkan struktur HTML FASIH
-    # Card = .rounded-xl.border yang punya email + total assignment
-    cards = page.locator('[class*="rounded-xl"][class*="border"]').filter(
-        has=page.locator('[class*="font-semibold"][class*="text-sm"]')
-    )
-    
-    count = await cards.count()
-    if count == 0:
-        # Fallback: coba cari langsung elemen email
-        # Struktur: div.f\:m-0.f\:truncate.f\:font-semibold.f\:text-sm
-        emails = await page.locator('text=@gmail.com, text=@bps.go.id').all_text_contents()
-        print(f"  [DEBUG] Fallback email scan: {emails[:3]}")
-        return hasil
-    
-    for i in range(count):
-        card = cards.nth(i)
-        try:
-            # Email
-            email_el = card.locator('[class*="font-semibold"][class*="text-sm"]').first
-            email = (await email_el.inner_text()).strip() if await email_el.count() > 0 else ""
-            
-            if not email or "@" not in email:
-                continue
-            
-            # Total assignment
-            total_el = card.locator('[class*="font-bold"][class*="text-primary"]').first
-            total = (await total_el.inner_text()).strip() if await total_el.count() > 0 else "0"
-            
-            hasil.append({
-                "email": email,
-                "total_assignment": total.replace(",", "").replace(".", ""),
-            })
-        except Exception as e:
-            print(f"  [WARN] Card {i}: {e}")
-    
-    return hasil
-
-
-# ──────────────────────────────────────────────
-# SCRAPE: Per SLS (expand tiap card petugas)
-# ──────────────────────────────────────────────
-async def scrape_sls_semua(page) -> list[dict]:
-    all_data = []
-    halaman = 1
-    
-    while True:
-        print(f"\n  [Halaman {halaman}] Expand petugas untuk scrape SLS...")
-        if halaman == 1:
-            try:
-                await page.wait_for_selector(
-                    'button[aria-expanded="false"]',
-                    timeout=10000
-                )
-            except Exception:
-                pass
-            await page.wait_for_timeout(1500)
-        data = await scrape_sls_halaman(page)
-        all_data.extend(data)
-        print(f"  [Halaman {halaman}] → {len(data)} SLS records")
-        
-        # Next page
-        next_btn = page.locator('a[aria-label="Go to next page"], a:has-text("Next")').first
-        if await next_btn.count() == 0 or await next_btn.is_disabled():
-            break
-        
-        await next_btn.click()
-        await page.wait_for_timeout(5000)  # +3 detik
-        halaman += 1
-    
-    return all_data
-
-
-async def scrape_sls_halaman(page) -> list[dict]:
-    hasil = []
-    
-    # Klik semua tombol expand (accordion)
-    expand_buttons = page.locator('button[aria-expanded="false"]').filter(
-        has=page.locator('[class*="tabler-icon-chevron-down"]')
-    )
-    
-    count = await expand_buttons.count()
-    print(f"    Found {count} petugas cards to expand")
-    
-    for i in range(count):
-        try:
-            btn = page.locator('button[aria-expanded="false"]').filter(
-                has=page.locator('[class*="tabler-icon-chevron-down"]')
-            ).first
-            
-            if await btn.count() == 0:
-                break
-            
-            # Ambil email dari card ini sebelum expand
-            card_parent = btn.locator('xpath=ancestor::div[@class and contains(@class,"rounded-xl")]').last
-            email_el = card_parent.locator('[class*="font-semibold"][class*="text-sm"]').first
-            email = ""
-            if await email_el.count() > 0:
-                email = (await email_el.inner_text()).strip()
-            
-            # Expand
-            await btn.click()
-            await page.wait_for_timeout(1000)
-            
-            # Scrape isi accordion yang baru terbuka
-            # Cari panel yang terbuka (data-state=open)
-            open_panel = page.locator('[data-state="open"]').last
-            
-            # Cari baris SLS/Assignment dalam panel
-            rows = open_panel.locator('tr, [class*="flex"][class*="items"]').all()
-            
-            # Fallback: cari tabel jika ada
-            table_rows = open_panel.locator('tr')
-            tr_count = await table_rows.count()
-            
-            if tr_count > 1:  # ada header + data
-                for j in range(1, tr_count):  # skip header
-                    row = table_rows.nth(j)
-                    cells = await row.locator('td').all_text_contents()
-                    if cells:
-                        row_data = {
-                            "petugas_email": email,
-                            "raw_cells": " | ".join(c.strip() for c in cells),
-                        }
-                        # Coba parsing berdasarkan posisi kolom umum FASIH
-                        # (id_sls, nama_sls, status, submitted_at, dst)
-                        col_names = ["id_sls", "nama_sls", "status", "keterangan", "col5", "col6", "col7", "col8"]
-                        for k, cell in enumerate(cells):
-                            if k < len(col_names):
-                                row_data[col_names[k]] = cell.strip()
-                        hasil.append(row_data)
-            else:
-                # Fallback: tangkap semua teks struktural dari panel
-                all_text = await open_panel.inner_text()
-                lines = [l.strip() for l in all_text.split("\n") if l.strip()]
-                for line in lines[:100]:  # max 100 baris per petugas
-                    if any(kw in line.lower() for kw in ["submitted", "approved", "rejected", "open", "draft", "review", "edited", "admin"]):
-                        hasil.append({
-                            "petugas_email": email,
-                            "raw_text": line,
-                        })
-            
-            print(f"    [{i+1}/{count}] {email} → {tr_count} rows")
-            
-        except Exception as e:
-            print(f"    [WARN] Error expand card {i}: {e}")
-    
-    return hasil
 
 
 # ──────────────────────────────────────────────
@@ -346,6 +260,7 @@ async def scrape_sls_pivot_semua(page) -> list[dict]:
     halaman = 1
 
     while True:
+        await check_and_handle_bot_block(page)
         print(f"\n  [Halaman {halaman}] Scrape SLS Pivot...")
         if halaman == 1:
             try:
@@ -355,7 +270,16 @@ async def scrape_sls_pivot_semua(page) -> list[dict]:
                 )
             except Exception:
                 print("  [WARN] Timeout menunggu accordion muncul di Halaman 1.")
-            await page.wait_for_timeout(1500)
+                if await check_and_handle_bot_block(page):
+                    # Setelah user handle bot block, coba tunggu lagi
+                    try:
+                        await page.wait_for_selector(
+                            'button[aria-expanded][class*="f:justify-between"]',
+                            timeout=10000
+                        )
+                    except Exception:
+                        pass
+            await human_delay(1.5, 2.5)
         rows = await scrape_sls_pivot_halaman(page)
         for row in rows:
             id_ = row["idsubsls"]
@@ -368,11 +292,6 @@ async def scrape_sls_pivot_semua(page) -> list[dict]:
         print(f"  [Halaman {halaman}] → {len(rows)} SLS cards (unik total: {len(all_data)})")
 
         # ── Deteksi halaman terakhir ────────────────────────────
-        # Di SPA ini semua href="#", is_disabled() tidak andal.
-        # Cara andal: cek nomor halaman aktif via aria-current,
-        # lalu bandingkan dengan nomor di link Next atau halaman terakhir.
-
-        # Ambil nomor halaman aktif saat ini
         current_page_el = page.locator('[aria-label="pagination"] a[aria-current="page"]').first
         if await current_page_el.count() > 0:
             current_num = (await current_page_el.inner_text()).strip()
@@ -385,20 +304,28 @@ async def scrape_sls_pivot_semua(page) -> list[dict]:
             print("  [INFO] Tombol Next tidak ditemukan — halaman terakhir.")
             break
 
-        # Klik Next
-        await next_btn.click()
-        # Tunggu skeleton loading hilang — cek sampai accordion muncul atau timeout
-        await page.wait_for_timeout(9500)  # jeda awal (+3 detik)
+        # Klik Next dengan scroll & delay natural
+        try:
+            await next_btn.scroll_into_view_if_needed()
+            await human_delay(0.5, 1.2)
+            await next_btn.click()
+        except Exception as e:
+            print(f"  [WARN] Gagal klik Next: {e}")
+            await check_and_handle_bot_block(page)
+
+        # Jeda natural setelah ganti halaman
+        await human_delay(4.0, 7.0)
+        await check_and_handle_bot_block(page)
         try:
             await page.wait_for_selector(
                 'button[aria-expanded][class*="f:justify-between"]',
-                timeout=5000
+                timeout=8000
             )
         except Exception:
-            pass  # fallback: lanjut meski timeout
-        await page.wait_for_timeout(1500)  # jeda tambahan untuk data render
+            await check_and_handle_bot_block(page)
+        await human_delay(1.5, 2.5)
 
-        # Cek apakah halaman berubah (nomor aktif berubah)
+        # Cek apakah halaman berubah
         new_page_el = page.locator('[aria-label="pagination"] a[aria-current="page"]').first
         if await new_page_el.count() > 0:
             new_num = (await new_page_el.inner_text()).strip()
@@ -414,16 +341,73 @@ async def scrape_sls_pivot_semua(page) -> list[dict]:
     return list(all_data.values())
 
 
+JS_PIVOT_EXTRACT_SCRIPT = """
+(btnIndex) => {
+    const SELECTOR = 'button[aria-expanded][class*="f:justify-between"]';
+    const buttons = document.querySelectorAll(SELECTOR);
+    const btn = buttons[btnIndex];
+    if (!btn) return [];
+
+    let panel = null;
+    if (btn.nextElementSibling) {
+        panel = btn.nextElementSibling;
+    }
+    if (!panel && btn.parentElement && btn.parentElement.nextElementSibling) {
+        panel = btn.parentElement.nextElementSibling;
+    }
+    if (!panel) {
+        let el = btn.parentElement;
+        for (let d = 0; d < 6 && el; d++) {
+            for (const child of el.children) {
+                if (!child.contains(btn) &&
+                    (child.className.includes('f:p-6') ||
+                     child.className.includes('f:space-y') ||
+                     child.className.includes('f:pt-0'))) {
+                    panel = child;
+                    break;
+                }
+            }
+            if (panel) break;
+            el = el.parentElement;
+        }
+    }
+
+    if (!panel) return [{ debug: 'panel not found' }];
+
+    const idDivs = panel.querySelectorAll(
+        '[class*="font-semibold"][class*="text-foreground"][class*="text-sm"]'
+    );
+
+    const results = [];
+    for (const div of idDivs) {
+        const id = div.textContent.trim();
+        if (!/^\\d{16}$/.test(id)) continue;
+
+        let row = div.parentElement;
+        while (row && !row.className.includes('f:group')) {
+            row = row.parentElement;
+        }
+        if (!row) continue;
+
+        const badges = {};
+        const statusSpans = row.querySelectorAll(
+            '[class*="uppercase"][class*="tracking-wider"]'
+        );
+        for (const span of statusSpans) {
+            const statusName = span.textContent.trim();
+            const countSpan = span.nextElementSibling;
+            if (countSpan) {
+                badges[statusName] = parseInt(countSpan.textContent.trim()) || 0;
+            }
+        }
+        results.push({ id, badges });
+    }
+    return results;
+}
+"""
 
 async def scrape_sls_pivot_halaman(page) -> list[dict]:
-    """
-    Parse satu halaman (5 petugas per halaman).
-
-    Strategi: pakai JavaScript DOM langsung (page.evaluate) setelah expand
-    tiap accordion — tidak ada regex/string slicing yang fragile.
-    JS query elemen DOM secara tepat per panel accordion.
-    """
-    import re
+    """Parse satu halaman (5 petugas per halaman)."""
     email_pattern = re.compile(r"[\w.+-]+@[\w.-]+\.[a-z]{2,}", re.IGNORECASE)
 
     ACCORDION_SELECTOR = 'button[aria-expanded][class*="f:justify-between"]'
@@ -441,115 +425,36 @@ async def scrape_sls_pivot_halaman(page) -> list[dict]:
 
     for i in range(total):
         try:
+            await check_and_handle_bot_block(page)
             btn = page.locator(ACCORDION_SELECTOR).nth(i)
 
-            # Ambil email dari teks button
             btn_text = (await btn.inner_text()).strip()
             email_match = email_pattern.search(btn_text)
             email = email_match.group().lower() if email_match else f"petugas_{i+1}"
 
-            # Expand kalau belum terbuka
-            is_expanded = (await btn.get_attribute("aria-expanded")) == "true"
-            if not is_expanded:
-                await btn.click()
-                await page.wait_for_timeout(1500)  # tunggu animasi accordion + data load
-                print(f"      [{i+1}/{total}] ▼ Expand: {email}")
+            # Coba ekstrak data DAHULU tanpa klik jika DOM panel sudah ada
+            sls_items = await page.evaluate(JS_PIVOT_EXTRACT_SCRIPT, i)
+            valid_items = [it for it in sls_items if isinstance(it, dict) and "id" in it]
+
+            if not valid_items:
+                # Expand kalau belum terbuka & data belum ada
+                is_expanded = (await btn.get_attribute("aria-expanded")) == "true"
+                if not is_expanded:
+                    await btn.scroll_into_view_if_needed()
+                    await human_delay(0.4, 0.9)
+                    await btn.click()
+                    await human_delay(1.5, 2.5)
+                    print(f"      [{i+1}/{total}] ▼ Expand: {email}")
+                    await check_and_handle_bot_block(page)
+                else:
+                    print(f"      [{i+1}/{total}] ✓ Sudah terbuka: {email}")
+                sls_items = await page.evaluate(JS_PIVOT_EXTRACT_SCRIPT, i)
             else:
-                print(f"      [{i+1}/{total}] ✓ Sudah terbuka: {email}")
+                print(f"      [{i+1}/{total}] ✓ Data sudah siap di DOM: {email}")
 
-            # ── Extract data langsung dari DOM via JavaScript ──────────
-            sls_items = await page.evaluate(
-                """
-                (btnIndex) => {
-                    const SELECTOR = 'button[aria-expanded][class*="f:justify-between"]';
-                    const buttons = document.querySelectorAll(SELECTOR);
-                    const btn = buttons[btnIndex];
-                    if (!btn) return [];
-
-                    // Cari panel konten accordion.
-                    // Struktur Radix UI: AccordionItem > [Trigger(button), Content(div)]
-                    // Panel biasanya nextElementSibling dari button, atau dari wrapper button.
-                    let panel = null;
-
-                    // Coba 1: sibling langsung dari button
-                    if (btn.nextElementSibling) {
-                        panel = btn.nextElementSibling;
-                    }
-
-                    // Coba 2: parent button punya sibling berikutnya
-                    if (!panel && btn.parentElement && btn.parentElement.nextElementSibling) {
-                        panel = btn.parentElement.nextElementSibling;
-                    }
-
-                    // Coba 3: walk up dari button, cari div dengan class f:p-6 atau f:space-y
-                    // yang bukan ancestor button itu sendiri
-                    if (!panel) {
-                        let el = btn.parentElement;
-                        for (let d = 0; d < 6 && el; d++) {
-                            for (const child of el.children) {
-                                if (!child.contains(btn) &&
-                                    (child.className.includes('f:p-6') ||
-                                     child.className.includes('f:space-y') ||
-                                     child.className.includes('f:pt-0'))) {
-                                    panel = child;
-                                    break;
-                                }
-                            }
-                            if (panel) break;
-                            el = el.parentElement;
-                        }
-                    }
-
-                    if (!panel) return [{ debug: 'panel not found' }];
-
-                    // Ambil semua item SLS dari panel
-                    // ID subsls ada di: div dengan class f:font-semibold f:text-foreground f:text-sm
-                    const idDivs = panel.querySelectorAll(
-                        '[class*="font-semibold"][class*="text-foreground"][class*="text-sm"]'
-                    );
-
-                    const results = [];
-                    for (const div of idDivs) {
-                        const id = div.textContent.trim();
-                        // Hanya kode subsls 16 digit
-                        if (!/^\\d{16}$/.test(id)) continue;
-
-                        // Cari parent row: walk up sampai ketemu elemen dengan class group atau flex
-                        let row = div.parentElement;
-                        while (row && !row.className.includes('f:group')) {
-                            row = row.parentElement;
-                        }
-                        if (!row) continue;
-
-                        // Ambil semua badge status dalam row ini
-                        const badges = {};
-                        const statusSpans = row.querySelectorAll(
-                            '[class*="uppercase"][class*="tracking-wider"]'
-                        );
-                        for (const span of statusSpans) {
-                            const statusName = span.textContent.trim();
-                            const countSpan = span.nextElementSibling;
-                            if (countSpan) {
-                                badges[statusName] = parseInt(countSpan.textContent.trim()) || 0;
-                            }
-                        }
-                        results.push({ id, badges });
-                    }
-                    return results;
-                }
-                """,
-                i,
-            )
-
-
-            # Konversi hasil JS ke format row CSV
             sls_count = 0
             for item in sls_items:
-                # Debug item dari JS (bukan data SLS)
-                if "debug" in item:
-                    print(f"        [DEBUG] JS: {item['debug']}")
-                    continue
-                if "id" not in item:
+                if "debug" in item or "id" not in item:
                     continue
 
                 id_val = item["id"]
@@ -573,9 +478,6 @@ async def scrape_sls_pivot_halaman(page) -> list[dict]:
             print(f"      [WARN] Error accordion {i+1}: {e}")
 
     return hasil
-
-
-
 
 
 # ──────────────────────────────────────────────

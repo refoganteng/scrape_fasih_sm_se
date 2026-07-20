@@ -1,0 +1,1 @@
+(()=>{"use strict";!function(){const t="__cfHooked";try{const o="__cf_attachShadow_open",e=Element.prototype.attachShadow;if(!e||e[t])return;Element.prototype.attachShadow=function(t){const c=e.call(this,t);return t&&"open"===t.mode&&this.dispatchEvent(new CustomEvent(o,{bubbles:!0,composed:!0})),c},Element.prototype.attachShadow[t]=!0}catch(t){}}()})();
